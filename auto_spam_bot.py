@@ -6,7 +6,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-API_TOKEN = "BOT_TOKEN_HERE"  # <- BotFather'dan olgan tokenni shu yerga qo'ying
+API_TOKEN = "8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ"  # <- BotFather'dan olgan tokenni shu yerga qo'ying
 
 logging.basicConfig(level=logging.INFO)
 
