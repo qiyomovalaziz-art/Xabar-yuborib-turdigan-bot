@@ -1,112 +1,84 @@
-import asyncio
-import json
-import os
-from aiogram import Bot, Dispatcher, executor, types
+# bot_profile_linker.py
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
-# --- Sozlamalar ---
-API_TOKEN = ("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")  # BotFather'dan olingan token, Railway ENV da saqlanadi
-ADMIN_ID = int(os.getenv("ADMIN_ID") or 0)  # Admin Telegram ID
-INTERVAL = 2  # soniyada yuborish intervali
+API_TOKEN = "BOT_TOKEN_HERE"  # <- BotFather'dan olgan tokenni shu yerga qo'ying
 
-DATA_FILE = "subscribers.json"
+logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
-# --- Faylni o'qish / yozish funksiyalari ---
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        return {"subs": [], "message": "Hozircha xabar yo'q."}
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {"subs": [], "message": "Hozircha xabar yo'q."}
+class Form(StatesGroup):
+    waiting_for_id = State()
+    waiting_for_label = State()
 
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+@dp.message_handler(commands=['start', 'help'])
+async def cmd_start(message: types.Message):
+    await Form.waiting_for_id.set()
+    await message.reply("Salom! Foydalanuvchi ID sini kiriting (raqamli ID yoki @username).")
 
-data = load_data()
-subscribers = set(data.get("subs", []))
-admin_message = data.get("message", "Hozircha xabar yo'q.")
+@dp.message_handler(state=Form.waiting_for_id, content_types=types.ContentTypes.TEXT)
+async def process_id(message: types.Message, state: FSMContext):
+    text = message.text.strip()
+    # saqlaymiz
+    await state.update_data(target=text)
+    await Form.waiting_for_label.set()
+    await message.reply("Endi tugma uchun matn kiriting (masalan: 'Profilga o‘tish').")
 
-# --- /myid buyrug'i (admin ID ni bilish uchun) ---
-@dp.message_handler(commands=["myid"])
-async def myid_cmd(msg: types.Message):
-    await msg.answer(f"Sizning ID'ingiz: {msg.from_user.id}")
+@dp.message_handler(state=Form.waiting_for_label, content_types=types.ContentTypes.TEXT)
+async def process_label(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    target = data.get("target")
+    label = message.text.strip() or "Profilga oʻtish"
 
-# --- /start buyrug'i ---
-@dp.message_handler(commands=["start"])
-async def start_cmd(msg: types.Message):
-    chat_id = msg.chat.id
-    if chat_id not in subscribers:
-        subscribers.add(chat_id)
-        data["subs"] = list(subscribers)
-        save_data(data)
-        await msg.answer("✅ Siz obunaga qo'shildingiz. Admin xabarini olasiz.")
+    # Har doim urinib ko'ramiz: agar @username yoki username mavjud bo'lsa, t.me link ishlatamiz.
+    # Aks holda tg://user?id=ID linkni beramiz.
+    url = None
+
+    # Agar foydalanuvchi '@username' tarzida kiritgan bo'lsa
+    if target.startswith("@"):
+        username = target[1:]
+        url = f"https://t.me/{username}"
     else:
-        await msg.answer("Siz allaqachon obunadasiz.")
-    await bot.send_message(chat_id, admin_message)
-
-# --- /unsubscribe yoki /stop ---
-@dp.message_handler(commands=["unsubscribe", "stop"])
-async def unsubscribe_cmd(msg: types.Message):
-    chat_id = msg.chat.id
-    if chat_id in subscribers:
-        subscribers.remove(chat_id)
-        data["subs"] = list(subscribers)
-        save_data(data)
-        await msg.answer("❌ Siz obunadan chiqarildingiz.")
-    else:
-        await msg.answer("Siz obunada emassiz.")
-
-# --- /setmsg (faqat admin uchun) ---
-@dp.message_handler(commands=["setmsg"])
-async def setmsg_cmd(msg: types.Message):
-    if msg.from_user.id != ADMIN_ID:
-        await msg.answer("Sizda ruxsat yo'q.")
-        return
-
-    if msg.reply_to_message and msg.reply_to_message.text:
-        new_text = msg.reply_to_message.text
-    else:
-        args = msg.get_args()
-        if not args:
-            await msg.answer("Iltimos: /setmsg <matn> yoki xabarga reply qilib /setmsg yuboring.")
-            return
-        new_text = args
-
-    global admin_message
-    admin_message = new_text
-    data["message"] = admin_message
-    save_data(data)
-    await msg.answer("✅ Xabar yangilandi.\nYangi xabar:\n" + admin_message)
-
-# --- /getmsg (hozirgi xabarni ko'rish, admin uchun) ---
-@dp.message_handler(commands=["getmsg"])
-async def getmsg_cmd(msg: types.Message):
-    if msg.from_user.id != ADMIN_ID:
-        await msg.answer("Sizda ruxsat yo'q.")
-        return
-    await msg.answer("Hozirgi xabar:\n" + admin_message)
-
-# --- Xabar yuborish vazifasi ---
-async def periodic_sender():
-    await asyncio.sleep(3)
-    while True:
-        if not subscribers:
-            await asyncio.sleep(1)
-            continue
-        for chat_id in list(subscribers):
+        # target raqamli ID bo'lgandek ko'rinadi; lekin u holda ham get_chat orqali usernameni aniqlashga urinib ko'ramiz
+        try:
+            # 'get_chat' bilan username bo'lsa chat.username o'zgaradi
+            chat = await bot.get_chat(chat_id=target)
+            username = getattr(chat, "username", None)
+            if username:
+                url = f"https://t.me/{username}"
+            else:
+                # username yo'q — fallback: tg://user?id=ID
+                url = f"tg://user?id={chat.id}"
+        except Exception as e:
+            # Agar get_chat xato bersa (masalan noto'g'ri ID), fallback sifatida tg:// link yasashga urinib ko'ramiz
             try:
-                await bot.send_message(chat_id, admin_message)
-            except Exception as e:
-                print(f"Xato {chat_id}: {e}")
-            await asyncio.sleep(0.1)
-        await asyncio.sleep(INTERVAL)
+                # agar target butun raqam bo'lsa
+                numeric = int(target)
+                url = f"tg://user?id={numeric}"
+            except Exception:
+                await message.reply("Kiritilgan ID/username noto'g'ri yoki aniqlab bo'lmadi. Iltimos qayta urinib ko'ring.")
+                await state.finish()
+                return
 
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.create_task(periodic_sender())
+    # Inline tugma yaratamiz
+    keyboard = types.InlineKeyboardMarkup()
+    button = types.InlineKeyboardButton(text=label, url=url)
+    keyboard.add(button)
+
+    await message.reply("Mana tugma — bosganingizda profilga o'tishga urinadi:", reply_markup=keyboard)
+    # tozalaymiz state
+    await state.finish()
+
+@dp.message_handler()
+async def fallback(message: types.Message):
+    await message.reply("Bot ishlamoqda. /start ni bosing va foydalanuvchi ID yoki @username kiriting.")
+
+if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
