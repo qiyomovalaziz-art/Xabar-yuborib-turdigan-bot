@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher, executor, types
 
-API_TOKEN = 'BOT_TOKEN_BU_YERGA_YOZ'  # BotFather dan olingan token
+API_TOKEN = '8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ'  # BotFather dan olingan token
 INTERVAL = 2  # soniyada (har 2 soniyada xabar yuboradi)
 
 bot = Bot(token=API_TOKEN)
