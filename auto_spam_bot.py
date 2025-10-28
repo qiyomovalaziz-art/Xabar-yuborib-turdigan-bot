@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, executor, types
 import asyncio
 import os
 
-API_TOKEN = os.getenv("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")
+API_TOKEN = os.getenv("BOT_TOKEN")
 INTERVAL = 2  # soniyada
 
 bot = Bot(token=API_TOKEN)
