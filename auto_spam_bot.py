@@ -1,38 +1,32 @@
-from aiogram import Bot, Dispatcher, executor, types
-import asyncio
+from aiogram import Bot, Dispatcher, types, executor
 import os
 
-API_TOKEN = ("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")
-INTERVAL = 2  # soniyada
+API_TOKEN = os.getenv("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-user_message = None
-target_chat_id = None
-is_running = False
+# Faqat admin ID (o'zingning Telegram ID'ingni shu yerga yoz)
+ADMIN_ID = 7973934849  # bu joyga o'zingning ID'ingni qo'y
+message_text = "Hozircha xabar yo‘q."  # dastlabki matn
 
-@dp.message_handler(commands=['start'])
-async def start(msg: types.Message):
-    global target_chat_id
-    target_chat_id = msg.chat.id
-    await msg.answer("Salom! Menga matn yubor, men uni har 2 soniyada yuborib turaman.")
+# /start buyrug'i
+@dp.message_handler(commands=["start"])
+async def start_cmd(message: types.Message):
+    await message.answer("Assalomu alaykum! Admin xabarini yuboraman.")
+    await bot.send_message(message.chat.id, message_text)
 
+# Admin xabar yuborsa, uni saqlaymiz
+@dp.message_handler(lambda msg: msg.from_user.id == ADMIN_ID)
+async def admin_msg(msg: types.Message):
+    global message_text
+    message_text = msg.text
+    await msg.answer("✅ Xabar yangilandi. Endi yangi foydalanuvchilarga shu xabar yuboriladi.")
+
+# Oddiy foydalanuvchi yozsa — e’tibor bermaymiz
 @dp.message_handler()
-async def get_message(msg: types.Message):
-    global user_message, is_running, target_chat_id
-    if target_chat_id is None:
-        target_chat_id = msg.chat.id
-    user_message = msg.text
-    is_running = True
-    await msg.answer(f"✅ Xabar qabul qilindi: {user_message}")
-    while is_running:
-        try:
-            await bot.send_message(target_chat_id, user_message)
-            await asyncio.sleep(INTERVAL)
-        except Exception as e:
-            print(f"Xatolik: {e}")
-            break
+async def ignore_msg(msg: types.Message):
+    pass
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
