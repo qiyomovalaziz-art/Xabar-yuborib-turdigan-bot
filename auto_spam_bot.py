@@ -8,7 +8,7 @@ from aiogram.utils import executor
 # ----------------------------
 API_TOKEN = "8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ"   # <-- bu yerga BotFather'dan olingan tokenni yozing
 ADMIN_ID = 7973934849                # <-- bu yerga o'z Telegram ID'ingizni yozing
-ALLOWED_GROUPS = [-10017384342819]  # <-- siz kuzatmoqchi bo'lgan guruh ID
+ALLOWED_GROUPS = [--1002451428746]  # <-- siz kuzatmoqchi bo'lgan guruh ID
 # ----------------------------
 
 logging.basicConfig(level=logging.INFO)
