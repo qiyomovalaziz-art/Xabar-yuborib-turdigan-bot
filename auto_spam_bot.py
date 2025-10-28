@@ -1,87 +1,53 @@
 import logging
-from datetime import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 
-# ----------------------------
 # ⚙️ Sozlamalar
-# ----------------------------
-API_TOKEN = "8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ"   # <-- bu yerga BotFather'dan olingan tokenni yozing
-ADMIN_ID = 7973934849                # <-- bu yerga o'z Telegram ID'ingizni yozing
-ALLOWED_GROUPS = [--1002451428746]  # <-- siz kuzatmoqchi bo'lgan guruh ID
-# ----------------------------
+API_TOKEN = "8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ"     # Bot tokenini shu yerga yoz
+ADMIN_ID = 7973934849                  # O'zingning Telegram ID'ingni yoz
+ALLOWED_GROUPS = [--1002451428746]     # Guruh ID (-100 bilan boshlanadi)
 
+# 📋 Log sozlamasi
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# ----------------------------
-# ➕ Kimdir guruhga qo‘shildi
-# ----------------------------
-@dp.message_handler(content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
-async def on_new_member(message: types.Message):
-    if message.chat.id not in ALLOWED_GROUPS:
-        return
-    chat = message.chat
-    for user in message.new_chat_members:
+
+# ✅ Guruhga yangi a'zo kirganda
+@dp.message_handler(content_types=['new_chat_members'])
+async def new_member(message: types.Message):
+    for member in message.new_chat_members:
         text = (
-            f"➕ <b>Yangi foydalanuvchi qo‘shildi</b>\n"
-            f"👥 Guruh: <code>{chat.title}</code>\n"
-            f"👤 {user.full_name} (@{user.username or '–'})\n"
-            f"🕒 {datetime.utcnow().isoformat()}"
+            f"🟢 <b>Yangi a'zo qo‘shildi:</b>\n"
+            f"👤 Ism: <code>{member.full_name}</code>\n"
+            f"🆔 ID: <code>{member.id}</code>\n"
+            f"📅 Guruh: {message.chat.title}"
         )
         await bot.send_message(ADMIN_ID, text, parse_mode="HTML")
 
-# ----------------------------
-# ➖ Kimdir guruhdan chiqdi
-# ----------------------------
-@dp.message_handler(content_types=types.ContentTypes.LEFT_CHAT_MEMBER)
-async def on_left_member(message: types.Message):
-    if message.chat.id not in ALLOWED_GROUPS:
-        return
-    chat = message.chat
+
+# ❌ Guruhdan foydalanuvchi chiqsa yoki chiqarilsa
+@dp.message_handler(content_types=['left_chat_member'])
+async def member_left(message: types.Message):
     user = message.left_chat_member
     text = (
-        f"➖ <b>Foydalanuvchi chiqdi</b>\n"
-        f"👥 Guruh: <code>{chat.title}</code>\n"
-        f"👤 {user.full_name} (@{user.username or '–'})\n"
-        f"🕒 {datetime.utcnow().isoformat()}"
+        f"🔴 <b>A'zo chiqdi yoki chiqarildi:</b>\n"
+        f"👤 Ism: <code>{user.full_name}</code>\n"
+        f"🆔 ID: <code>{user.id}</code>\n"
+        f"📅 Guruh: {message.chat.title}"
     )
     await bot.send_message(ADMIN_ID, text, parse_mode="HTML")
 
-# ----------------------------
-# 🔄 Status o‘zgarishini kuzatish
-# ----------------------------
-@dp.chat_member_handler()
-async def on_member_update(update: types.ChatMemberUpdated):
-    if update.chat.id not in ALLOWED_GROUPS:
-        return
 
-    old_status = update.old_chat_member.status
-    new_status = update.new_chat_member.status
-    if old_status != new_status:
-        user = update.new_chat_member.user
-        chat = update.chat
-        text = (
-            f"🔁 <b>Status o‘zgardi</b>\n"
-            f"👥 Guruh: <code>{chat.title}</code>\n"
-            f"👤 {user.full_name} (@{user.username or '–'})\n"
-            f"🔸 {old_status} → {new_status}\n"
-            f"🕒 {datetime.utcnow().isoformat()}"
-        )
-        await bot.send_message(ADMIN_ID, text, parse_mode="HTML")
-
-# ----------------------------
-# 🟢 /start buyrug‘i
-# ----------------------------
-@dp.message_handler(commands=["start"])
-async def start_cmd(message: types.Message):
-    await message.reply(
-        "👋 Salom! Men faqat siz belgilagan guruhdagi kirish, chiqish va status o‘zgarishlarini kuzataman."
+# 🧩 Start komandasi
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    await message.answer(
+        "👋 Salom! Men siz belgilagan guruhdagi kirish va chiqish holatlarini "
+        "sutka davomida kuzatib boraman va sizga xabar yuboraman."
     )
 
-# ----------------------------
+
 # 🚀 Ishga tushirish
-# ----------------------------
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
