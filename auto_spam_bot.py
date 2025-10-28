@@ -4,7 +4,7 @@ import os
 from aiogram import Bot, Dispatcher, executor, types
 
 # --- Sozlamalar ---
-API_TOKEN = os.getenv("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")  # Railway: Environment variable sifatida qo'ying
+API_TOKEN = ("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")  # Railway: Environment variable sifatida qo'ying
 ADMIN_ID = int(os.getenv("7973934849") or 0)  # Admin Telegram ID: Railway dagi env ga qo'ying (masalan 123456789)
 INTERVAL = 2  # soniyada (har 2 soniyada yuboradi)
 
