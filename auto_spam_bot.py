@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher, types, executor
 import os
 
-API_TOKEN = os.getenv("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")
+API_TOKEN = ("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
