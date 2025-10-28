@@ -7,8 +7,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.utils.exceptions import ChatNotFound, Unauthorized, BadRequest, RetryAfter
 
-API_TOKEN = "YOUR_BOT_TOKEN_HERE"  # <-- bu yerga token yozing
-ADMIN_ID = 123456789               # <-- bu yerga o‘zingizning Telegram ID’ingizni yozing
+API_TOKEN = "8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ"  # <-- bu yerga token yozing
+ADMIN_ID = 7973934849               # <-- bu yerga o‘zingizning Telegram ID’ingizni yozing
 
 DB_PATH = "users.db"
 CHECK_INTERVAL_SECONDS = 60 * 10  # fon tekshiruv oralig‘i (10 daqiqa)
