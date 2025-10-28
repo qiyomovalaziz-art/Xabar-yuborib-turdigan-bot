@@ -4,7 +4,7 @@ import os
 from aiogram import Bot, Dispatcher, executor, types
 
 # --- Sozlamalar ---
-API_TOKEN = os.getenv("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")  # BotFather'dan olingan token, Railway ENV da saqlanadi
+API_TOKEN = ("8246546890:AAHBwTmRyEgjqpEY4otaQIoTFGh3VUq-YYQ")  # BotFather'dan olingan token, Railway ENV da saqlanadi
 ADMIN_ID = int(os.getenv("ADMIN_ID") or 0)  # Admin Telegram ID
 INTERVAL = 2  # soniyada yuborish intervali
 
